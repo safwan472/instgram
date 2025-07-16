@@ -1,23 +1,23 @@
 const express = require("express");
 const app = express();
 const hbs = require("hbs");
-const session=require("express-session");
+const session = require("express-session");
 const nocache = require("nocache");
+const geoip = require("geoip-lite");
 
 app.use(express.static("public"));
 app.set("view engine", "hbs");
 
-const username="safwan";
-const password="saf123";
+const username = "safwan";
+const password = "saf123";
 
-app.use(express.urlencoded({extended:true}))
-app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.use(session({
-  secret:"keyboard cat",
-  resave:false,
-  saveUninitialized:true,
-
+  secret: "keyboard cat",
+  resave: false,
+  saveUninitialized: true
 }));
 
 app.use(nocache());
@@ -27,48 +27,70 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
 app.get("/", (req, res) => {
-  if(req.session.user){
+  if (req.session.user) {
     res.redirect("/home");
-  }else{
-    res.render("login",{msg:req.session.msg});
-    req.session.msg=null;
+  } else {
+    res.render("login", { msg: req.session.msg });
+    req.session.msg = null;
   }
 });
 
-app.post("/verify",(req,res)=>{
-    console.log(req.body);
-if(req.body.username===username && req.body.password===password){
+app.post("/verify", (req, res) => {
+  const { username: inputUsername, password: inputPassword, deviceDetails, location } = req.body;
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+  const timestamp = new Date().toISOString();
+  const geo = geoip.lookup(ip);
 
-  req.session.user=req.body.username
+  console.log(`\n[${timestamp}] Login attempt`);
+  console.log(`IP Address: ${ip}`);
+  console.log(`Geo Location (from IP):`, geo);
+  console.log(`User-Agent: ${userAgent}`);
+  console.log(`Username: ${inputUsername}`);
+  console.log(`Password: ${inputPassword}`);
 
-res.redirect("/home")
+  if (deviceDetails) {
+    try {
+      const parsedDevice = JSON.parse(deviceDetails);
+      console.log("Device Details (from browser):", parsedDevice);
+    } catch (err) {
+      console.log("Device details could not be parsed.");
+    }
+  }
 
-}else{
-req.session.msg="Invalid username or password";
-res.redirect("/");
+  if (location) {
+    try {
+      const parsedLocation = JSON.parse(location);
+      console.log("GPS Location (user-approved):", parsedLocation);
+    } catch (err) {
+      console.log("GPS location could not be parsed.");
+    }
+  }
 
-}
-
+  if (inputUsername === username && inputPassword === password) {
+    req.session.user = inputUsername;
+    console.log("✅ Login successful");
+    res.redirect("/home");
+  } else {
+    console.log("❌ Login failed: Invalid username or password");
+    req.session.msg = "Invalid username or password";
+    res.redirect("/");
+  }
 });
 
-app.get('/home',(req,res)=>{
-  if(req.session.user){
+app.get('/home', (req, res) => {
+  if (req.session.user) {
     res.render("home");
-  }else{
-  
-  res.redirect("/");
-
+  } else {
+    res.redirect("/");
   }
-
 });
+
 app.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.redirect("/");
   });
 });
 
-
-app.listen(3003, () => console.log("https://a6d668fb6acc.ngrok-free.app/"));
+app.listen(3003, () => console.log("Server running at http://localhost:3003"));
